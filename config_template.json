@@ -1,0 +1,7 @@
+{
+    "filmUrl":"https://www.test.com/torrents/films",
+    "serieUrl":"https://www.test.com/torrents/series",
+    "plexBaseUrl":"http://8.8.8.8:99999",
+    "plexToken":"token",
+    "mac":true
+}
