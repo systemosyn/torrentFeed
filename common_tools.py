@@ -1,5 +1,4 @@
 
-import csv
 import json
 from pathlib import Path
 import shutil
@@ -7,12 +6,9 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 import time
-import glob
 import os
 import logging
 from shutil import copy
-import sqlite3
-from plexapi.server import PlexServer
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -31,7 +27,7 @@ def check_exists_by_id(browser, by, xpath):
 
 
 def newBackupDB():
-    shutil.copy(os.path.expanduser('~')+'/dev/test.db', os.path.expanduser('~')+'/dev/backUpTest.db')
+    shutil.copy(os.path.join(os.path.expanduser('~'), 'dev','test.db'), os.path.expanduser('~')+'/dev/backUpTest.db')
 
 def closeAdds(browser, url):
     while (len(browser.window_handles) != 1) :
@@ -63,7 +59,8 @@ def launch_browser(extensionPath, sortUsed, mediaUrl):
     # browser  = webdriver.Chrome(
     # Open the Website
     browser.maximize_window()
-    with open(os.path.expanduser('~')+'/dev/torrentFeed/config.json') as config_file:
+    # os.path.join(os.path.expanduser('~'), 'dev','torrentFeed','config.json') 
+    with open(os.path.join(os.path.expanduser('~'), 'dev','torrentFeed','config.json')) as config_file:
         data = json.load(config_file)
     rootUrl=data[mediaUrl]
     macPlatform=data['mac']

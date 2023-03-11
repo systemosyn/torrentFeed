@@ -21,35 +21,30 @@ from common_tools import check_exists_by_id, launch_browser, newBackupDB, closeA
 # from nordvpn_connect import initialize_vpn, rotate_VPN, close_vpn_connection
 
 
-def move_last_torrent_files_to_torrent_folder(path):
-    list_of_files = glob.glob(os.path.expanduser('~')+'/Downloads/*.torrent') # * means all if need specific format then *.csv
+def move_last_torrent_files_to_torrent_folder(torrentPath,remotePath,macPlatform):
+    list_of_files = glob.glob(os.path.expanduser('~')+torrentPath) # * means all if need specific format then *.csv
     fileInDownloads = max(list_of_files, key=os.path.getctime)
     fileInDownloadsWithoutSpaces=fileInDownloads.replace(" ", "_")
     fileInDownloadsWithoutSpaces=fileInDownloadsWithoutSpaces.replace("(", "_")
     fileInDownloadsWithoutSpaces=fileInDownloadsWithoutSpaces.replace(")", "_")
     fileInDownloadsWithoutSpaces=fileInDownloadsWithoutSpaces.replace("'", "_")
     os.rename(fileInDownloads, fileInDownloadsWithoutSpaces)
-    filename = fileInDownloadsWithoutSpaces.split("/")[-1]
-    logger.info("______"+path+filename+"______")
-    if not Path(path+filename).is_file():
-        #os.system("mv "+fileInDownloadsWithoutSpaces+" "+targetFolder)
-        # if not os.path.ismount("/Volumes/Home/torrentFeed"):
-        if not os.path.ismount(os.path.expanduser('~')+"/dev/mnt/torrentFeed"):
-            logger.error("not yet, mounted...")
-            #os.system("mount /home/dat/mnt")
-
-        else:
-            logger.info("nas path mounted")
-            required=sqlite_is_new_torrent_requirement(filename)
-            if required :
-                try:
-                    copy(fileInDownloadsWithoutSpaces, os.path.expanduser('~')+"/dev/mnt/torrentFeed/")
-                except FileNotFoundError as e:
-                    logger.error(e)
-                finally:
-                    os.remove(fileInDownloadsWithoutSpaces)
-                logger.info("copying done!")
-            
+    if macPlatform :
+        filename = fileInDownloadsWithoutSpaces.split("/")[-1]
+    else:
+        filename = fileInDownloadsWithoutSpaces.split("\\")[-1]
+    logger.info("______"+remotePath+filename+"______")
+    if not Path(remotePath+filename).is_file():
+        logger.info("nas path mounted")
+        required=sqlite_is_new_torrent_requirement(filename)
+        if required :
+            try:
+                copy(fileInDownloadsWithoutSpaces, remotePath)
+            except FileNotFoundError as e:
+                logger.error(e)
+            finally:
+                os.remove(fileInDownloadsWithoutSpaces)
+            logger.info("copying done!")        
     else :
         logger.info(filename+" already processed.")
         os.remove(fileInDownloadsWithoutSpaces)
@@ -84,6 +79,28 @@ def botDifferentPages(numberOfPage, sortUsed):
                         closeAdds(browser, url)
                         time.sleep(2)
                         browser.get(url)
+                    if macPlatform :
+                        torrentPath='/Downloads/*.torrent'
+                        remotePath="/Volumes/Home/torrentFeed"
+                        move_last_torrent_files_to_torrent_folder(torrentPath,remotePath,macPlatform)
+                        while (len(browser.window_handles) != 1) :
+                            browser.switch_to.window(browser.window_handles[1])
+                            browser.close()
+                        parent = browser.window_handles[0]
+                        browser.switch_to.window(parent)
+                        browser.get(url)
+                    else:
+                        torrentPath='\\Downloads\\*.torrent'
+                        remotePath='Z:\\torrentFeed'
+                        move_last_torrent_files_to_torrent_folder(torrentPath,remotePath,macPlatform)
+                        while (len(browser.window_handles) != 1) :
+                            browser.switch_to.window(browser.window_handles[1])
+                            browser.close()
+                        parent = browser.window_handles[0]
+                        browser.switch_to.window(parent)
+                        browser.get(url)
+                        
+                    time.sleep(2)
                 else : 
                     logger.error("torrentButton does not exist")
             else:
