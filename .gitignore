@@ -3,3 +3,8 @@ torrentFiles/*
 config.json
 Notes.md
 test.txt
+__pycache__/*
+build/*
+dist/*
+__pycache__/cpasbienFeedSeries.cpython-310.pyc
+cpasbienFeedMovies.spec

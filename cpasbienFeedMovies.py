@@ -12,17 +12,14 @@ import logging
 from shutil import copy
 import sqlite3
 from plexapi.server import PlexServer
+from selenium.webdriver.chrome.options import Options
+
+from common_tools import check_exists_by_id, launch_browser, newBackupDB, closeAdds
 
 #### HDRip, HDCAM, XviD-RZP, x264-RZP
 
 # from nordvpn_connect import initialize_vpn, rotate_VPN, close_vpn_connection
 
-def check_exists_by_id(browser, by, xpath):
-    try:
-        browser.find_element(by,xpath)
-    except NoSuchElementException:
-        return False
-    return True
 
 def move_last_torrent_files_to_torrent_folder(path):
     list_of_files = glob.glob(os.path.expanduser('~')+'/Downloads/*.torrent') # * means all if need specific format then *.csv
@@ -59,93 +56,39 @@ def move_last_torrent_files_to_torrent_folder(path):
 
 # Initiate the browser, to run without conf just put the driver this way: cp chromedriver /usr/local/bin
 ## todo add windows config##
-def bot():
-    browser  = webdriver.Chrome()
-    # Open the Website
-    browser.maximize_window()
-    with open( os.path.expanduser('~')+'/dev/torrentFeed/config.json') as config_file:
-        data = json.load(config_file)
-    url=data['filmUrl']
-    macPlatform=data['mac']
-    browser.get(url)
-    time.sleep(1)
-    #numberOfRows = len(browser.find_element(By.XPATH,'/html/body/div[1]/div[3]/div[2]/table/tbody'))
-    #rows = browser.find_elements(By.XPATH("/html/body/div[1]/div[3]/div[2]/table/tbody"))
-    ## todo add all the xpath in config ##
-    ## todo add the loop to iterate into all the torrents ##
-
-    for iteration in range(1,51):
-        if check_exists_by_id(browser, By.XPATH,'/html/body/div[1]/div[3]/div[2]/table/tbody/tr['+str(iteration)+']'):
-            torrentPageElem=browser.find_element(By.XPATH,'/html/body/div[1]/div[3]/div[2]/table/tbody/tr['+str(iteration)+']')
-            torrentPageElem.click()
-            time.sleep(1)
-            parent = browser.window_handles[0]
-            browser.switch_to.window(parent)
-            if check_exists_by_id(browser, By.XPATH,'/html/body/div[1]/div[3]/div[2]/div[2]/div[2]/div[2]/a/img'):
-                torrentButton=browser.find_element(By.XPATH,'/html/body/div[1]/div[3]/div[2]/div[2]/div[2]/div[2]/a/img')
-                torrentButton.click()
-                time.sleep(1)
-                ## todo add the else part ##
-                if macPlatform :
-                    list_of_files = glob.glob(os.path.expanduser('~')+'/Downloads/*.torrent') # * means all if need specific format then *.csv
-                    fileInDownloads = max(list_of_files, key=os.path.getctime)
-                    move_last_torrent_files_to_torrent_folder(os.path.expanduser('~')+'/dev/mnt/torrentFeed/')
-                    while (len(browser.window_handles) != 1) :
-                        browser.switch_to.window(browser.window_handles[1])
-                        browser.close()
-                    parent = browser.window_handles[0]
-                    browser.switch_to.window(parent)
-                    browser.get(url)
-            else : 
-                logger.error("torrentButton does not exist")
-        else:
-            logger.error("torrent: "+'/html/body/div[1]/div[3]/div[2]/table/tbody/tr['+str(iteration)+']'+" does not exist")
-    sqlite_export_torrent_table()
 
 def botDifferentPages(numberOfPage, sortUsed):
-    offset=1
-    browser  = webdriver.Chrome()
-    # Open the Website
-    browser.maximize_window()
-    with open(os.path.expanduser('~')+'/dev/torrentFeed/config.json') as config_file:
-        data = json.load(config_file)
-    rootUrl=data['filmUrl']
-    macPlatform=data['mac']
-    #numberOfRows = len(browser.find_element(By.XPATH,'/html/body/div[1]/div[3]/div[2]/table/tbody'))
-    #rows = browser.find_elements(By.XPATH("/html/body/div[1]/div[3]/div[2]/table/tbody"))
-    ## todo add all the xpath in config ##
-    ## todo add the loop to iterate into all the torrents --> DONE##
+    result=launch_browser(r'/Users/clementoudin/dev/5.4.1_0',sortUsed, 'filmUrl')
+    browser= result["browser"]
+    macPlatform = result["macPlatform"]
+    rootUrl = result["rootUrl"]
+    offset =result["offset"]
     for i in range(numberOfPage):
         url=rootUrl+"/"+str(i*50+offset)+sortUsed
         browser.get(url)
-        time.sleep(1)
+        time.sleep(2)
         for iteration in range(1,51):
             if check_exists_by_id(browser, By.XPATH,'/html/body/div[1]/div[3]/div[2]/table/tbody/tr['+str(iteration)+']'):
                 torrentPageElem=browser.find_element(By.XPATH,'/html/body/div[1]/div[3]/div[2]/table/tbody/tr['+str(iteration)+']')
                 torrentPageElem.click()
-                time.sleep(1)
+                time.sleep(2)
                 parent = browser.window_handles[0]
                 browser.switch_to.window(parent)
-                if check_exists_by_id(browser, By.XPATH,'/html/body/div[1]/div[3]/div[2]/div[2]/div[2]/div[2]/a/img'):
-                    torrentButton=browser.find_element(By.XPATH,'/html/body/div[1]/div[3]/div[2]/div[2]/div[2]/div[2]/a/img')
+                if check_exists_by_id(browser, By.XPATH,'//*[@id="infosficher"]/div[2]'):
+                    torrentButton=browser.find_element(By.XPATH,'//*[@id="infosficher"]/div[2]')
                     torrentButton.click()
-                    time.sleep(1)
+                    time.sleep(5)
                     ## todo add the else part ##
                     if macPlatform :
-                        list_of_files = glob.glob(os.path.expanduser('~')+'/Downloads/*.torrent') # * means all if need specific format then *.csv
-                        fileInDownloads = max(list_of_files, key=os.path.getctime)
                         move_last_torrent_files_to_torrent_folder(os.path.expanduser('~')+'/dev/mnt/torrentFeed/')
-                        while (len(browser.window_handles) != 1) :
-                            browser.switch_to.window(browser.window_handles[1])
-                            browser.close()
-                        parent = browser.window_handles[0]
-                        browser.switch_to.window(parent)
+                        closeAdds(browser, url)
+                        time.sleep(2)
                         browser.get(url)
                 else : 
                     logger.error("torrentButton does not exist")
             else:
                 logger.error("torrent: "+'/html/body/div[1]/div[3]/div[2]/table/tbody/tr['+str(iteration)+']'+" does not exist")
-    sqlite_export_torrent_table()
+    newBackupDB()
 
 ## add ways to store torrents with unknown fields maybe use plce for each pattern since LANGAGE is always first ##
 def torrents_dict_for_SQLite(filename):
@@ -360,25 +303,6 @@ def sqlite_is_new_torrent_requirement(filenameToTest):
         logger.info("torrent "+ dictToTest['NAME']+ " is not required and not inserted to the database")
         return False
 
-def sqlite_export_torrent_table():
-    try:
-        conn = sqlite3.connect('test.db')
-        cursor = conn.cursor()
-        cursor.execute("select * from TORRENT")
-        with open("TORRENT_DB.csv", "w") as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter="\t")
-            csv_writer.writerow([i[0] for i in cursor.description])
-            csv_writer.writerows(cursor)
-
-        dirpath = os.getcwd() + "/employee_data.csv"
-        logger.info("Data exported Successfully into {}".format(dirpath))
-
-    except sqlite3.Error as e:
-        logger.error(e)
-
-    # Close database connection
-    finally:
-        conn.close()
 
 ### todo: export table in csv https://gist.github.com/shitalmule04/82d2091e2f43cb63029500b56ab7a8cc ##
 logger = logging.getLogger('cpasbienFeed')
@@ -398,7 +322,7 @@ logger.addHandler(ch)
 # YOUR STUFF
 
 # bot()
-botDifferentPages(3,'')
+botDifferentPages(2,'')
 # botDifferentPages(3,"/seeds/desc")
 
 
