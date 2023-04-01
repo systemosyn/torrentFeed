@@ -47,7 +47,7 @@ def move_last_torrent_files_to_torrent_folder_2(path):
         os.remove(fileInDownloadsWithoutSpaces)
 
 def botDifferentPages_1(numberOfPage, sortUsed):
-    result=launch_browser(r'/Users/clementoudin/dev/5.4.1_0', sortUsed, 'serieUrl')
+    result=launch_browser(r'/Users/clementoudin/dev/5.4.1_0', sortUsed, 'animeUrl')
     browser= result["browser"]
     macPlatform = result["macPlatform"]
     rootUrl = result["rootUrl"]
@@ -306,7 +306,7 @@ def sqlite_create_torrent_table_if_not_exist_5():
 
 def sqlite_insert_torrent_in_table_7(dict):
     conn = sqlite3.connect('test.db')
-    sql = ''' INSERT INTO TORRENTSERIES (ID,NAME,PLATFORM,LANGAGE,EPISODE,SAISON,INTEGRAL,FULLNAME,UNDEFINED,FORMAT) VALUES(?,?,?,?,?,?,?,?,?,?)'''
+    sql = ''' INSERT OR IGNORE INTO TORRENTSERIES (ID,NAME,PLATFORM,LANGAGE,EPISODE,SAISON,INTEGRAL,FULLNAME,UNDEFINED,FORMAT) VALUES(?,?,?,?,?,?,?,?,?,?)'''
     row = (dict['ID'], dict['NAME'], dict['PLATFORM'], dict['LANGAGE'], dict['EPISODE'], dict['SAISON'], dict['INTEGRAL'], dict['FULLNAME'], dict['UNDEFINED'], dict['FORMAT'])
     cur = conn.cursor()
     cur.execute(sql, row)
@@ -336,6 +336,9 @@ def sqlite_is_torrent_needed_6(dict):
     Otherwise the torrent is required.'''
     
     conn = sqlite3.connect('test.db')
+    table_exist=conn.execute("SELECT count(ID) FROM TORRENTSERIES WHERE ID=?",(dict['NAME'],))
+    if table_exist.fetchone()[0]==1 : 
+        return False
     if (dict['UNDEFINED']=='True'):
         return True
     if(dict['INTEGRAL']=='True'):
@@ -453,7 +456,7 @@ logger=logging.getLogger('CPasBienFeed')
 # YOUR STUFF
 
 # bot()
-botDifferentPages_1(1,'')
+botDifferentPages_1(15,'')
 
 # ######### PUT FILE ON NAS TEST ###########
 # test_file_to_push_on_nas=os.path.expanduser('~')+"/dev/torrentFeed/test.txt"

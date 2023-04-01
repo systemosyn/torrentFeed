@@ -28,6 +28,7 @@ def check_exists_by_id(browser, by, xpath):
 
 def newBackupDB():
     shutil.copy(os.path.join(os.path.expanduser('~'), 'dev','test.db'), os.path.expanduser('~')+'/dev/backUpTest.db')
+    shutil.copy(os.path.join(os.path.expanduser('~'), 'dev','test.db'), '/Volumes/Home/backUpTest.db')
 
 def closeAdds(browser, url):
     while (len(browser.window_handles) != 1) :
